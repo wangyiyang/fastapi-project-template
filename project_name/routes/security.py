@@ -4,9 +4,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 
 from ..config import settings
+from ..schemas.security import RefreshToken, Token
 from ..security import (
-    RefreshToken,
-    Token,
     User,
     authenticate_user,
     create_access_token,
@@ -29,7 +28,7 @@ async def login_for_access_token(
     if not user or not isinstance(user, User):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
+            detail="用户名或密码不正确",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
@@ -44,11 +43,17 @@ async def login_for_access_token(
         data={"sub": user.username}, expires_delta=refresh_token_expires
     )
 
-    return {
-        "access_token": access_token,
-        "refresh_token": refresh_token,
-        "token_type": "bearer",
-    }
+    token_data = Token.TokenData(
+        access_token=access_token,
+        refresh_token=refresh_token, 
+        token_type="bearer"
+    )
+    
+    return Token(
+        code=200,
+        message="登录成功",
+        data=token_data
+    )
 
 
 @router.post("/refresh_token", response_model=Token)
@@ -66,8 +71,14 @@ async def refresh_token(form_data: RefreshToken):
         data={"sub": user.username}, expires_delta=refresh_token_expires
     )
 
-    return {
-        "access_token": access_token,
-        "refresh_token": refresh_token,
-        "token_type": "bearer",
-    }
+    token_data = Token.TokenData(
+        access_token=access_token,
+        refresh_token=refresh_token, 
+        token_type="bearer"
+    )
+    
+    return Token(
+        code=200,
+        message="令牌刷新成功",
+        data=token_data
+    )

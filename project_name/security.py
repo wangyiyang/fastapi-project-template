@@ -5,10 +5,10 @@ from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-from pydantic import BaseModel
 from sqlmodel import Field, Relationship, Session, SQLModel
 
-from project_name.models.content import Content, ContentResponse
+from project_name.models.content import Content
+from project_name.schemas.security import TokenData
 
 from .config import settings
 from .db import engine
@@ -18,20 +18,6 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 SECRET_KEY = settings.security.secret_key
 ALGORITHM = settings.security.algorithm
-
-
-class Token(BaseModel):
-    access_token: str
-    refresh_token: str
-    token_type: str
-
-
-class RefreshToken(BaseModel):
-    refresh_token: str
-
-
-class TokenData(BaseModel):
-    username: Optional[str] = None
 
 
 class HashedPassword(str):
@@ -75,34 +61,6 @@ class User(SQLModel, table=True):
 
     # it populates the .user attribute on the Content Model
     contents: List["Content"] = Relationship(back_populates="user")
-
-
-class UserResponse(BaseModel):
-    """This is the User model to be used as a response_model
-    it doesn't include the password.
-    """
-
-    id: int
-    username: str
-    disabled: bool
-    superuser: bool
-    contents: Optional[List[ContentResponse]] = Field(default_factory=list)
-
-
-class UserCreate(BaseModel):
-    """This is the User model to be used when creating a new user."""
-
-    username: str
-    password: str
-    superuser: bool = False
-    disabled: bool = False
-
-
-class UserPasswordPatch(SQLModel):
-    """This is to accept password for changing"""
-
-    password: str
-    password_confirm: str
 
 
 def verify_password(plain_password, hashed_password) -> bool:
@@ -156,7 +114,7 @@ def get_user(username) -> Optional[User]:
 
 
 def get_current_user(
-    token: str = Depends(oauth2_scheme), request: Request = None, fresh=False
+    token: str = Depends(oauth2_scheme), request: Optional[Request] = None, fresh: bool = False
 ) -> User:
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -201,7 +159,7 @@ AuthenticatedUser = Depends(get_current_active_user)
 
 
 def get_current_fresh_user(
-    token: str = Depends(oauth2_scheme), request: Request = None
+    token: str = Depends(oauth2_scheme), request: Optional[Request] = None
 ) -> User:
     return get_current_user(token, request, True)
 

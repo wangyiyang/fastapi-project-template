@@ -5,7 +5,8 @@ from fastapi.exceptions import HTTPException
 from sqlmodel import Session, or_, select
 
 from ..db import ActiveSession
-from ..models.content import Content, ContentIncoming, ContentResponse
+from ..models.content import Content
+from ..schemas.content import ContentIncoming, ContentResponse
 from ..security import AuthenticatedUser, User, get_current_user
 
 router = APIRouter()
@@ -14,7 +15,7 @@ router = APIRouter()
 @router.get("/", response_model=List[ContentResponse])
 async def list_contents(*, session: Session = ActiveSession):
     contents = session.exec(select(Content)).all()
-    return contents
+    return [ContentResponse.from_orm(content) for content in contents]
 
 
 @router.get("/{id_or_slug}/", response_model=ContentResponse)
@@ -29,7 +30,7 @@ async def query_content(
     )
     if not content:
         raise HTTPException(status_code=404, detail="Content not found")
-    return content.first()
+    return ContentResponse.from_orm(content.first())
 
 
 @router.post(
@@ -48,7 +49,7 @@ async def create_content(
     session.add(db_content)
     session.commit()
     session.refresh(db_content)
-    return db_content
+    return ContentResponse.from_orm(db_content)
 
 
 @router.patch(
@@ -83,7 +84,7 @@ async def update_content(
     # Commit the session
     session.commit()
     session.refresh(content)
-    return content
+    return ContentResponse.from_orm(content)
 
 
 @router.delete("/{content_id}/", dependencies=[AuthenticatedUser])

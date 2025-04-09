@@ -5,16 +5,15 @@ from fastapi.exceptions import HTTPException
 from sqlmodel import Session, or_, select
 
 from ..db import ActiveSession
+from ..schemas.security import UserCreate, UserPasswordPatch, UserResponse
 from ..security import (
     AdminUser,
     AuthenticatedFreshUser,
     AuthenticatedUser,
     User,
-    UserCreate,
-    UserPasswordPatch,
-    UserResponse,
     get_current_user,
     get_password_hash,
+    HashedPassword,
 )
 
 router = APIRouter()
@@ -72,7 +71,7 @@ async def update_user_password(
         raise HTTPException(status_code=400, detail="Passwords don't match")
 
     # Update the password
-    user.password = get_password_hash(patch.password)
+    user.password = HashedPassword(patch.password)
 
     # Commit the session
     session.commit()

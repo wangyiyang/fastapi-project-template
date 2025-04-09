@@ -6,6 +6,7 @@ from starlette.middleware.cors import CORSMiddleware
 
 from .config import settings
 from .db import create_db_and_tables, engine
+from .middlewares import setup_middlewares
 from .routes import main_router
 
 
@@ -50,6 +51,9 @@ if settings.server and settings.server.get("cors_origins", None):
         allow_methods=settings.get("server.cors_allow_methods", ["*"]),
         allow_headers=settings.get("server.cors_allow_headers", ["*"]),
     )
+
+# 设置中间件和异常处理器
+setup_middlewares(app)
 
 app.include_router(main_router)
 

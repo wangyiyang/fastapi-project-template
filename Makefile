@@ -26,6 +26,8 @@ install:          ## Install the project in dev mode.
 
 .PHONY: fmt
 fmt:              ## Format code using black & isort.
+	$(ENV_PREFIX)autoflake --remove-all-unused-imports --remove-unused-variables --recursive --in-place project_name/
+	$(ENV_PREFIX)autoflake --remove-all-unused-imports --remove-unused-variables --recursive --in-place tests/
 	$(ENV_PREFIX)isort project_name/
 	$(ENV_PREFIX)black -l 79 project_name/
 	$(ENV_PREFIX)black -l 79 tests/

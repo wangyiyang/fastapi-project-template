@@ -50,6 +50,7 @@ def test_user_by_bad_id(api_client_authenticated):
     response = api_client_authenticated.get("/user/42")
     result = response.json()
     assert response.status_code == 404
+    assert result.get("detail") == "User not found"
 
 
 def test_user_by_bad_username(api_client_authenticated):
@@ -275,9 +276,9 @@ def test_stale_token(api_client_authenticated):
     result = response.json()
 
     # set stale access_token
-    api_client_authenticated.headers[
-        "Authorization"
-    ] = f"Bearer {result['access_token']}"
+    api_client_authenticated.headers["Authorization"] = (
+        f"Bearer {result['access_token']}"
+    )
 
     response = api_client_authenticated.patch(
         f"/user/{user_id}/password/",
